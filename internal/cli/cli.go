@@ -137,12 +137,13 @@ const usage = `usage:
   lcoat op audit-verify [name] [audit-packet]
   lcoat op archive-verify [name] [archive-packet]
   lcoat op trust-chain [name] [--strict]
-  lcoat scope status
+  lcoat scope status [operation]
   lcoat scope check <capability> <target>
   lcoat evidence add <path> [--kind kind] [--target target] [--classification label] [--redacted true|false]
-  lcoat evidence list
-  lcoat finding add <title> [--level observed|inferred|validated] [--severity severity] [--confidence confidence] [--evidence id]...
-  lcoat finding list
+  lcoat evidence list [operation]
+  lcoat evidence verify [operation]
+  lcoat finding add <title> [--level observed|inferred|validated] [--severity severity] [--confidence confidence] [--status open|resolved|accepted] [--impact text] [--recommendation text] [--evidence id]...
+  lcoat finding list [operation]
   lcoat ledger verify <ledger-file|-> [--json]
   lcoat ledger checkpoint <ledger-file|-> [--json]
   lcoat receipt create --action action --actor actor --subject-type type --subject ref [--prev-hash sha256] [--evidence-ref ref] [--artifact-ref path=sha256] [--approval-ref ref] [--limitation text] [--out receipt.json] [--json]

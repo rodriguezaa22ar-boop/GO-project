@@ -83,7 +83,7 @@ func findingAdd(ctx *Context, args []string) error {
 }
 
 func findingList(ctx *Context, args []string) error {
-	op, err := operation.LoadActive(ctx.Layout)
+	op, err := loadReadOnlyOp(ctx, args, "finding list [operation]")
 	if err != nil {
 		return err
 	}

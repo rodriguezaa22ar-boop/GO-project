@@ -24,7 +24,7 @@ Prototype, ready-to-refine. The two-week MVP in [`docs/BLUEPRINT.md`](docs/BLUEP
 
 Implemented: `target`, `op start/resume/list/status/show/readiness/close/report/handoff/closeout/audit-packet/archive-packet/verify/audit-verify/archive-verify/trust-chain`, `scope status/check`, `evidence add/list/verify`, `finding add/list`, `ledger verify/checkpoint`, `receipt verify/replay/create`, and `adapter run` with the `nmap` adapter (flag allowlist; the target always comes from scope) and the `script` adapter (operator-declared tier, recorded rather than enforced).
 
-Deferred to the Rust build (see the blueprint): `v1 status`/`production status` (the pillars check for a toolchain Lite does not ship, so `op trust-chain` certifies only the metadata chain), validation planning, evidence bundles and redaction, finding lifecycle beyond `add`, release packets, and the `web`/`flow`/`advisor` extensions.
+Deferred to the Rust build (see the blueprint): `v1 status`/`production status` (the pillars check for a toolchain Lite does not ship, so `op trust-chain` certifies only the metadata chain), validation planning, evidence bundles and redaction, changing a finding's status after `add`, release packets, and the `web`/`flow`/`advisor` extensions.
 
 ### Build and test
 

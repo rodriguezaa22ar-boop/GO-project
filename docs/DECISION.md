@@ -66,7 +66,7 @@ settled here.
   operation's trust artifacts are sound" and split the two.
 - **Validation planning** needs the shared intel graph (wiremap), which is
   out of scope for a control-plane prototype.
-- Evidence bundles and redaction, finding lifecycle beyond `add`, release
+- Evidence bundles and redaction, changing a finding's status after `add`, release
   packets, and the `web`/`flow`/`advisor` extensions were out of the MVP.
 
 ## Metadata-only enforcement: the gap to close in Rust
@@ -79,7 +79,7 @@ buys: a `MetadataOnly` wrapper type that only the scanner can construct
 makes that path a compile error. Every packet writer in Lite is a place
 where that gap was felt.
 
-## Field test (0.1.1 → 0.1.2)
+## Field test (0.1.1 → 0.1.3)
 
 A full operation run against a live container (local recon via the script
 adapter, guardrail probes, closeout chain, receipt, tamper tests) found:
@@ -95,7 +95,15 @@ adapter, guardrail probes, closeout chain, receipt, tamper tests) found:
   executed `--` as the tool). Fixed, and tests now require exit 0.
 - **Runbook error:** packet commands after `op close` need the operation
   name. Fixed.
+- **List commands ignored the operation name** (0.1.3). `finding list`,
+  `evidence list` and `scope status` always read the active operation, so
+  after `op close` they failed, and with another operation active they
+  silently showed the wrong one's records. They now take an optional
+  operation name and reject unknown names or stray arguments.
+- Correction: Lite can end a chain clean. `finding add --status resolved`
+  yields `current`; `open` yields `attention-required`; `accepted` yields
+  `incomplete` (needs the review packet Lite lacks). What Lite lacks is
+  changing a status after the finding is added.
 - Still open: `receipt verify` does not re-hash referenced artifacts (by
-  design, matches the shell build); with any finding the chain stays
-  attention-required because Lite has no finding resolution; `op brief`
-  suggests validation planning, which Lite lacks.
+  design, matches the shell build); `op brief` suggests validation
+  planning, which Lite lacks.

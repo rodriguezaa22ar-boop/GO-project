@@ -71,7 +71,7 @@ func evidenceAdd(ctx *Context, args []string) error {
 }
 
 func evidenceList(ctx *Context, args []string) error {
-	op, err := operation.LoadActive(ctx.Layout)
+	op, err := loadReadOnlyOp(ctx, args, "evidence list [operation]")
 	if err != nil {
 		return err
 	}

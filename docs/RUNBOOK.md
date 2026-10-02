@@ -14,7 +14,7 @@ Fedora 44 is almost certainly x86_64. Check with `uname -m`
 # verify the download first
 sha256sum -c SHA256SUMS --ignore-missing
 install -m 0755 lcoat-linux-amd64 ~/.local/bin/lcoat   # or arm64
-lcoat version          # -> lcoat 0.1.2
+lcoat version          # -> lcoat 0.1.3
 ```
 
 Pick a lab root (all state lives here; nothing is written elsewhere):
@@ -75,12 +75,25 @@ lcoat adapter run nmap astra -- -sV 10.0.0.0/8   # refused: extra target
 
 ```sh
 lcoat evidence list                       # note the evidence id (ev_...)
-lcoat finding add "OpenSSH 22/tcp exposed" \
-  --level observed --severity info --confidence high \
+lcoat finding add "Cockpit 9090/tcp listens on all interfaces" \
+  --level observed --severity low --confidence high --status open \
   --evidence ev_XXXX \
-  --recommendation "Confirm SSH exposure is intended; restrict source if not"
+  --recommendation "Restrict to the tailnet with firewalld, or disable it if unused"
+lcoat finding list
 lcoat op brief
 ```
+
+A finding's status is set when you add it and cannot be changed later, and
+it decides how the operation ends:
+
+| Status | Use it when | Trust chain ends |
+| --- | --- | --- |
+| `open` | Needs fixing, not fixed yet | `attention-required` |
+| `resolved` | Fixed during the run; cite the re-scan evidence | `current` |
+| `accepted` | Intended exposure, risk accepted | `incomplete` (needs a review packet Lite cannot make) |
+
+Expected exposure such as SSH on the tailnet does not need a finding; the
+evidence already records it.
 
 ## Close out with a verifiable trust chain
 
@@ -88,7 +101,7 @@ lcoat op brief
 OP=astra-recon                    # your operation name
 lcoat op report
 lcoat op handoff
-lcoat op close --force            # --force only while findings are still open
+lcoat op close                    # add --force only if a finding is still open
 
 # After close there is no active operation, so name it from here on.
 lcoat op closeout       $OP
@@ -103,11 +116,14 @@ lcoat evidence verify   $OP       # re-hashes every captured evidence file
 lcoat op trust-chain    $OP
 ```
 
-Expect `Trust Chain Status: attention-required` while findings are open.
-Lite can record findings but cannot yet resolve or accept them (that lands
-in the Rust build), so with any findings the packets verify but the chain
-stays attention-required. Check the Verification section: Closeout, Audit
-Packet, Archive Packet and Evidence Artifacts should all say `verified`.
+`Trust Chain Status` is `current` with no findings or only `resolved` ones,
+`attention-required` with any `open` finding, and `incomplete` with any
+`accepted` one. Either way, the Verification section's Closeout, Audit
+Packet, Archive Packet and Evidence Artifacts lines should all say
+`verified`.
+
+List commands take the operation name too, so they work after close:
+`lcoat finding list $OP`, `lcoat evidence list $OP`, `lcoat scope status $OP`.
 
 `op brief` may suggest "Create a validation plan"; validation planning is
 not in Lite, so skip that step.

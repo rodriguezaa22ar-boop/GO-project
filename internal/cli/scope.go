@@ -8,19 +8,19 @@ import (
 
 func runScope(ctx *Context, args []string) error {
 	if len(args) == 0 {
-		return state.Failf("scope status|check <capability> <target>")
+		return state.Failf("scope status [operation] | scope check <capability> <target>")
 	}
 	switch args[0] {
 	case "status":
-		return scopeStatus(ctx)
+		return scopeStatus(ctx, args[1:])
 	case "check":
 		return scopeCheck(ctx, args[1:])
 	}
 	return state.Failf("unknown scope command: %s", args[0])
 }
 
-func scopeStatus(ctx *Context) error {
-	op, err := operation.LoadActive(ctx.Layout)
+func scopeStatus(ctx *Context, args []string) error {
+	op, err := loadReadOnlyOp(ctx, args, "scope status [operation]")
 	if err != nil {
 		return err
 	}

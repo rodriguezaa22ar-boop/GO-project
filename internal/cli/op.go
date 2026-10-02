@@ -266,6 +266,16 @@ func opReport(ctx *Context, args []string) error {
 
 // Helpers shared by op subcommands.
 
+// loadReadOnlyOp loads the named operation (open or closed) or, with no
+// name, the active one. It accepts at most one positional argument, so a
+// typo is reported rather than silently ignored.
+func loadReadOnlyOp(ctx *Context, args []string, usage string) (*operation.Operation, error) {
+	if len(args) > 1 || (len(args) == 1 && strings.HasPrefix(args[0], "-")) {
+		return nil, state.Failf("usage: %s", usage)
+	}
+	return loadOp(ctx, args)
+}
+
 func loadOp(ctx *Context, args []string) (*operation.Operation, error) {
 	name := ""
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
