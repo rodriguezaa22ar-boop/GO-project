@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/rodriguezaa22ar-boop/go-project/internal/ndjson"
@@ -343,17 +344,7 @@ func exactKeys(m map[string]any, allowed []string) bool {
 	return true
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var d []byte
-	for n > 0 {
-		d = append([]byte{byte('0' + n%10)}, d...)
-		n /= 10
-	}
-	return string(d)
-}
+func itoa(n int) string { return strconv.Itoa(n) }
 
 // CreateParams holds the inputs to Create.
 type CreateParams struct {

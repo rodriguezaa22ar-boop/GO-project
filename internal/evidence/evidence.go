@@ -17,6 +17,12 @@ import (
 )
 
 // IndexFile returns evidence.ndjson for an operation directory.
+// KindAdapterOutput is the evidence kind recorded for output captured by
+// `adapter run`. It is distinct from operator-chosen kinds such as
+// scan-output so the report can list adapter runs without changing output
+// for operations the shell build could also have produced.
+const KindAdapterOutput = "adapter-output"
+
 func IndexFile(opDir string) string { return filepath.Join(opDir, "evidence.ndjson") }
 
 // Dir returns the evidence directory for an operation directory.

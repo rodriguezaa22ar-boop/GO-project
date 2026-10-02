@@ -3,9 +3,11 @@ package adapter
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/rodriguezaa22ar-boop/go-project/internal/evidence"
@@ -55,8 +57,10 @@ func Run(op *operation.Operation, p RunParams) (*Result, error) {
 	}
 	if tier > MaxTier {
 		// Record the refusal intent so the attempt is auditable.
-		_ = op.AppendLedger("adapter.refused", capability, a.Name(), "denied",
-			"adapter="+a.Name()+" tier="+itoa(tier)+" reason=above-max-tier")
+		if lerr := op.AppendLedger("adapter.refused", capability, a.Name(), "denied",
+			"adapter="+a.Name()+" tier="+strconv.Itoa(tier)+" reason=above-max-tier"); lerr != nil {
+			fmt.Fprintf(os.Stderr, "lcoat: warning: could not record adapter.refused: %v\n", lerr)
+		}
 		return nil, state.Failf("adapter %s classified as tier %d (%s); Lite refuses anything above tier %d", a.Name(), tier, capability, MaxTier)
 	}
 
@@ -79,29 +83,19 @@ func Run(op *operation.Operation, p RunParams) (*Result, error) {
 	}
 
 	if err := op.AppendLedger("adapter.started", capability, a.Name(), "ok",
-		"adapter="+a.Name()+" tier="+itoa(tier)+" target="+target); err != nil {
+		"adapter="+a.Name()+" tier="+strconv.Itoa(tier)+" target="+target); err != nil {
 		return nil, err
 	}
 
 	out, exitCode, dur, runErr := execute(argv, p.Timeout)
 	// Capture output as evidence regardless of exit code, so a failed run is
-	// still auditable. Write it under a stable basename so the stored
-	// artifact path is meaningful, not a temp-file name.
-	tmpDir, err := os.MkdirTemp("", "lcoat-adapter-")
+	// still auditable.
+	rec, err := captureEvidence(op, a.Name(), target, out)
 	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(tmpDir)
-	capturePath := filepath.Join(tmpDir, a.Name()+"-output.txt")
-	if err := os.WriteFile(capturePath, out, 0o600); err != nil {
-		return nil, err
-	}
-
-	rec, err := evidence.Add(op, evidence.AddParams{
-		SourcePath: capturePath, Kind: "scan-output", Target: target,
-		Classification: "internal", Tool: a.Name(),
-	})
-	if err != nil {
+		// Close the started event so the ledger never shows a run that began
+		// and silently vanished.
+		_ = op.AppendLedger("adapter.finished", capability, a.Name(), "error",
+			"adapter="+a.Name()+" exit="+strconv.Itoa(exitCode)+" evidence=none reason=capture-failed")
 		return nil, err
 	}
 
@@ -114,7 +108,7 @@ func Run(op *operation.Operation, p RunParams) (*Result, error) {
 	if runErr != nil || exitCode != 0 {
 		status = "error"
 	}
-	detail := "adapter=" + a.Name() + " exit=" + itoa(exitCode) + " duration_ms=" + itoa64(res.DurationMS) +
+	detail := "adapter=" + a.Name() + " exit=" + strconv.Itoa(exitCode) + " duration_ms=" + strconv.FormatInt(res.DurationMS, 10) +
 		" evidence=" + rec.ID + " sha256=" + rec.SHA256
 	if err := op.AppendLedger("adapter.finished", capability, a.Name(), status, detail); err != nil {
 		return nil, err
@@ -161,23 +155,21 @@ func execute(argv []string, timeout time.Duration) ([]byte, int, time.Duration, 
 	return buf.Bytes(), exitCode, dur, err
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
+// captureEvidence writes the tool output under a stable basename (so the
+// stored artifact path is meaningful, not a temp-file name) and records it
+// as evidence.
+func captureEvidence(op *operation.Operation, adapterName, target string, out []byte) (*evidence.Record, error) {
+	tmpDir, err := os.MkdirTemp("", "lcoat-adapter-")
+	if err != nil {
+		return nil, err
 	}
-	neg := n < 0
-	if neg {
-		n = -n
+	defer os.RemoveAll(tmpDir)
+	capturePath := filepath.Join(tmpDir, adapterName+"-output.txt")
+	if err := os.WriteFile(capturePath, out, 0o600); err != nil {
+		return nil, err
 	}
-	var d []byte
-	for n > 0 {
-		d = append([]byte{byte('0' + n%10)}, d...)
-		n /= 10
-	}
-	if neg {
-		d = append([]byte{'-'}, d...)
-	}
-	return string(d)
+	return evidence.Add(op, evidence.AddParams{
+		SourcePath: capturePath, Kind: EvidenceKind, Target: target,
+		Classification: "internal", Tool: adapterName,
+	})
 }
-
-func itoa64(n int64) string { return itoa(int(n)) }

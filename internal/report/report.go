@@ -121,7 +121,11 @@ func Render(op *operation.Operation) (string, error) {
 	}
 	b.WriteString("\n## Artifacts\n\n")
 	b.WriteString("- Operation directory: `" + op.Dir + "`\n")
-	b.WriteString("- No recon or action artifacts tracked yet.\n")
+	arts, err := reconArtifacts(op)
+	if err != nil {
+		return "", err
+	}
+	b.WriteString(arts)
 	b.WriteString("\n## Validation Plans\n\n")
 	b.WriteString("- No validation plans recorded yet.\n")
 	b.WriteString("\n## Notes\n\n")
@@ -277,4 +281,26 @@ func orUnknown(s string) string {
 		return "unknown"
 	}
 	return s
+}
+
+// reconArtifacts lists evidence captured through adapters (tool runs) as
+// metadata: id, kind, stored path and hash, never the output itself. With
+// no adapter evidence it keeps the shell build's wording, so reports for
+// operations without adapter runs stay byte-identical to the oracle.
+func reconArtifacts(op *operation.Operation) (string, error) {
+	recs, err := evidence.Latest(op.Dir, op.Target)
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for _, r := range recs {
+		if r.Kind != evidence.KindAdapterOutput {
+			continue
+		}
+		b.WriteString("- Recon artifact: " + r.ID + " `" + r.Path + "` sha256=" + r.SHA256 + "\n")
+	}
+	if b.Len() == 0 {
+		return "- No recon or action artifacts tracked yet.\n", nil
+	}
+	return b.String(), nil
 }

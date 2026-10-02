@@ -5,6 +5,7 @@
 package adapter
 
 import (
+	"github.com/rodriguezaa22ar-boop/go-project/internal/evidence"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/scope"
 )
 
@@ -62,3 +63,7 @@ const MaxTier = 2
 
 // tierOf returns the numeric tier for a capability, or -1 when unknown.
 func tierOf(capability string) int { return scope.Tier(capability) }
+
+// EvidenceKind is the evidence kind recorded for adapter output. The report
+// uses it to list recon artifacts captured through adapters.
+const EvidenceKind = evidence.KindAdapterOutput

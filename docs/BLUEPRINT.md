@@ -129,7 +129,7 @@ An adapter wraps an external tool as a subprocess. The tool never needs to know 
 2. **Preflight.** `scope` checks the tier against the operation's `ALLOWED_CAPABILITIES` and `BLOCKED_CAPABILITIES`. A blocked or out-of-scope target stops here, with a ledger event.
 3. **Record intent.** Append `adapter.started` to the ledger before anything touches the target.
 4. **Execute.** Run the argv array directly. No `sh -c`, a scrubbed environment, a hard timeout.
-5. **Capture.** Write stdout and stderr to a temp file and add it as evidence (`kind=scan-output`), which hashes it.
+5. **Capture.** Write stdout and stderr to a temp file and add it as evidence (`kind=adapter-output`), which hashes it. If capture fails, still write `adapter.finished` with status `error` so no run is left open in the ledger.
 6. **Record result.** Append `adapter.finished` with exit code, duration, evidence ID and SHA256. Never the output itself.
 7. **Propose findings.** If the adapter can parse its output, it returns proposed findings for the operator to confirm. Nothing is recorded as a finding automatically.
 

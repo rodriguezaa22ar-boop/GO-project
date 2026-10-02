@@ -151,12 +151,6 @@ func auditFlags(op *operation.Operation, st *readiness.State, events []ledger.Ev
 		lines = append(lines, "stale archive packet: "+readiness.PathOr(st.ArchivePacket, "none"))
 	}
 	var b strings.Builder
-	if verStatus == "verified" {
-		if len(lines) == 0 {
-			// The shell still prints the verification note before the
-			// "no audit flags" line is suppressed by the note's presence.
-		}
-	}
 	for _, l := range lines {
 		b.WriteString(l + "\n")
 	}

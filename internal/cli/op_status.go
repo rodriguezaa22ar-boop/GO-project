@@ -6,6 +6,7 @@ import (
 	"github.com/rodriguezaa22ar-boop/go-project/internal/operation"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/scope"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/validation"
+	"strconv"
 )
 
 func opStatus(ctx *Context, args []string) error {
@@ -170,23 +171,6 @@ func joinEvidence(ev []string) string {
 	return out
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var digits []byte
-	neg := n < 0
-	if neg {
-		n = -n
-	}
-	for n > 0 {
-		digits = append([]byte{byte('0' + n%10)}, digits...)
-		n /= 10
-	}
-	if neg {
-		digits = append([]byte{'-'}, digits...)
-	}
-	return string(digits)
-}
+func itoa(n int) string { return strconv.Itoa(n) }
 
 var _ = scope.ReadOnly

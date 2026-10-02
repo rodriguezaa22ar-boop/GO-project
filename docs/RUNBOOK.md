@@ -14,7 +14,7 @@ Fedora 44 is almost certainly x86_64. Check with `uname -m`
 # verify the download first
 sha256sum -c SHA256SUMS --ignore-missing
 install -m 0755 lcoat-linux-amd64 ~/.local/bin/lcoat   # or arm64
-lcoat version          # -> lcoat 0.1.0
+lcoat version          # -> lcoat 0.1.1
 ```
 
 Pick a lab root (all state lives here; nothing is written elsewhere):
@@ -34,8 +34,10 @@ That is enough for recon; you need no profile file.
 lcoat target add fedora-lab 127.0.0.1 --scope-status in-scope --criticality low --tag homelab
 lcoat op start fedora-lab-review fedora-lab authorized self-review of my study server
 
-# Capture real local recon through the script adapter (tier 2 = active-recon).
-# Each run is scope-checked and its output is hashed into evidence.
+# Capture real local recon through the script adapter. You declare the tier
+# (--tier 1 passive, --tier 2 active); Lite records your declaration but
+# cannot inspect an arbitrary command, so the ledger reflects your word, not
+# enforcement. Each run's output is hashed into evidence.
 lcoat adapter run script fedora-lab --tier 1 -- ss -tlnp
 lcoat adapter run script fedora-lab --tier 1 -- systemctl list-units --type=service --state=running
 lcoat adapter run script fedora-lab --tier 1 -- rpm -qa --last
@@ -53,6 +55,20 @@ lcoat op start astra-recon astra authorized recon of my study server
 lcoat adapter run nmap astra -- -sn
 lcoat adapter run nmap astra -- -sV --top-ports 100
 # nmap output is parsed into PROPOSED findings; you confirm the ones you want.
+```
+
+The nmap adapter only accepts allowlisted flags, and the target address
+always comes from the operation's scope, never from your arguments. Refused:
+extra hosts (bare addresses, `-iL`, `-iR`, `--resume`), output flags (`-o*`,
+the adapter manages output), NSE scripts other than `--script default|safe`,
+`--script-args`, decoys/spoofing/evasion options and `--min-rate`. Allowed:
+`-sn -sS -sT -sU -sV -sC -A -O -F -r -Pn -n -6 -v -vv -T0..-T5 --open
+--reason --traceroute --version-light --version-all`, plus `-p`, `--top-ports`,
+`--exclude-ports`, `--version-intensity`, `--max-retries`, `--max-rate`,
+`--host-timeout`.
+
+```sh
+lcoat adapter run nmap astra -- -sV 10.0.0.0/8   # refused: extra target
 ```
 
 ## Turn proposed findings into recorded findings
