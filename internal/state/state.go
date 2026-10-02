@@ -112,8 +112,17 @@ func (l *Layout) OpDir(slug string) string {
 	return filepath.Join(l.SessionsDir, slug)
 }
 
-// Now is the clock used for every timestamp. Tests may replace it.
-var Now = func() time.Time { return time.Now().UTC() }
+// Now is the clock used for every timestamp. Tests may replace it. The
+// LCOAT_NOW environment variable (RFC3339 UTC) pins it, which conformance
+// runs use to align with a frozen shell-build clock.
+var Now = func() time.Time {
+	if v := os.Getenv("LCOAT_NOW"); v != "" {
+		if t, err := time.Parse("2006-01-02T15:04:05Z", v); err == nil {
+			return t.UTC()
+		}
+	}
+	return time.Now().UTC()
+}
 
 // Timestamp returns the shell build's `date -u +%Y-%m-%dT%H:%M:%SZ`.
 func Timestamp() string {
