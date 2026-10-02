@@ -69,7 +69,11 @@ func adapterRun(ctx *Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	ok(ctx, "adapter run complete")
+	if res.ExitCode == 0 {
+		ok(ctx, "adapter run complete")
+	} else {
+		warn(ctx, res.Adapter+" exited with code "+itoa(res.ExitCode)+"; output captured as evidence for audit")
+	}
 	kv(ctx, "adapter", res.Adapter)
 	kv(ctx, "capability", res.Capability)
 	kv(ctx, "tier", itoa(res.Tier))
@@ -85,6 +89,9 @@ func adapterRun(ctx *Context, args []string) error {
 		}
 	} else {
 		note(ctx, "no proposed findings (confirm findings manually with finding add)")
+	}
+	if res.ExitCode != 0 {
+		return &ExitError{Code: 1}
 	}
 	return nil
 }

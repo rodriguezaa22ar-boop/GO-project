@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rodriguezaa22ar-boop/go-project/internal/evidence"
@@ -82,6 +83,15 @@ func Run(op *operation.Operation, p RunParams) (*Result, error) {
 		return nil, err
 	}
 
+	// Resolve the tool through the same scrubbed PATH it will run with, and
+	// fail before adapter.started if it is not installed, so a missing tool
+	// is reported plainly instead of being recorded as an empty capture.
+	resolved, err := lookPath(argv[0])
+	if err != nil {
+		return nil, err
+	}
+	argv[0] = resolved
+
 	if err := op.AppendLedger("adapter.started", capability, a.Name(), "ok",
 		"adapter="+a.Name()+" tier="+strconv.Itoa(tier)+" target="+target); err != nil {
 		return nil, err
@@ -138,7 +148,7 @@ func execute(argv []string, timeout time.Duration) ([]byte, int, time.Duration, 
 	defer cancel()
 	start := time.Now() // real elapsed time, not the frozen LCOAT_NOW clock
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
-	cmd.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL=C"}
+	cmd.Env = []string{"PATH=" + scrubbedPATH, "LC_ALL=C"}
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
@@ -172,4 +182,28 @@ func captureEvidence(op *operation.Operation, adapterName, target string, out []
 		SourcePath: capturePath, Kind: EvidenceKind, Target: target,
 		Classification: "internal", Tool: adapterName,
 	})
+}
+
+// scrubbedPATH is the only PATH adapter tools see.
+const scrubbedPATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+// lookPath resolves name against scrubbedPATH (not the caller's PATH), or
+// checks it directly when it contains a slash.
+func lookPath(name string) (string, error) {
+	isExec := func(p string) bool {
+		fi, err := os.Stat(p)
+		return err == nil && fi.Mode().IsRegular() && fi.Mode()&0o111 != 0
+	}
+	if strings.Contains(name, "/") {
+		if isExec(name) {
+			return name, nil
+		}
+		return "", state.Failf("tool not found or not executable: %s", name)
+	}
+	for _, dir := range filepath.SplitList(scrubbedPATH) {
+		if p := filepath.Join(dir, name); isExec(p) {
+			return p, nil
+		}
+	}
+	return "", state.Failf("tool %q not found in %s; install it or pass an absolute path", name, scrubbedPATH)
 }

@@ -8,13 +8,15 @@ import (
 
 func runEvidence(ctx *Context, args []string) error {
 	if len(args) == 0 {
-		return state.Failf("evidence add|list")
+		return state.Failf("evidence add|list|verify")
 	}
 	switch args[0] {
 	case "add":
 		return evidenceAdd(ctx, args[1:])
 	case "list":
 		return evidenceList(ctx, args[1:])
+	case "verify":
+		return evidenceVerify(ctx, args[1:])
 	}
 	return state.Failf("unknown evidence command: %s", args[0])
 }
@@ -91,6 +93,40 @@ func evidenceList(ctx *Context, args []string) error {
 			sha = sha[:20]
 		}
 		line(ctx, "%-22s %-16s %-14s %-8s %-20s %s", r.ID, r.Kind, r.Classification, redacted, sha, r.Path)
+	}
+	return nil
+}
+
+// evidenceVerify re-hashes every stored evidence artifact and exits 1 if
+// any artifact is missing or changed since capture.
+func evidenceVerify(ctx *Context, args []string) error {
+	op, err := loadOp(ctx, args)
+	if err != nil {
+		return err
+	}
+	checks, problems, err := evidence.VerifyArtifacts(op.Dir)
+	if err != nil {
+		return err
+	}
+	heading(ctx, "Evidence Artifact Verification")
+	rule(ctx)
+	kv(ctx, "Operation", op.Name)
+	for _, c := range checks {
+		detail := c.Path
+		if c.Status == "changed" {
+			detail += " expected_sha=" + c.Expected + " actual_sha=" + c.Actual
+		}
+		line(ctx, "%-26s %-9s %s", c.ID, c.Status, detail)
+	}
+	status := "verified"
+	if problems > 0 {
+		status = "attention-required"
+	}
+	kv(ctx, "Artifacts Checked", itoa(len(checks)))
+	kv(ctx, "Artifact Problems", itoa(problems))
+	kv(ctx, "Verification Status", status)
+	if problems > 0 {
+		return &ExitError{Code: 1}
 	}
 	return nil
 }

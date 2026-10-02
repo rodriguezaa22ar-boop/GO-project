@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"github.com/rodriguezaa22ar-boop/go-project/internal/evidence"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/operation"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/readiness"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/state"
@@ -23,6 +24,10 @@ type TrustChain struct {
 	CloseoutPath         string
 	AuditPath            string
 	ArchivePath          string
+	// EvidenceVerification re-hashes stored artifacts (Lite addition).
+	EvidenceVerification string
+	EvidenceChecked      int
+	EvidenceProblems     int
 }
 
 // CollectTrustChain gathers the metadata-chain state for an operation.
@@ -49,7 +54,20 @@ func CollectTrustChain(op *operation.Operation) (*TrustChain, error) {
 	}
 	tc.ArchiveVerification = archiveVerification
 
+	checks, problems, err := evidence.VerifyArtifacts(op.Dir)
+	if err != nil {
+		return nil, err
+	}
+	tc.EvidenceChecked, tc.EvidenceProblems = len(checks), problems
+	tc.EvidenceVerification = "verified"
+	if problems > 0 {
+		tc.EvidenceVerification = "attention-required"
+	}
+
 	switch {
+	case tc.EvidenceProblems > 0:
+		tc.Status = "attention-required"
+		tc.NextStep = "Evidence artifacts changed or missing since capture; run 'lcoat evidence verify' and investigate before trusting this operation."
 	case tc.ArchiveStatus != "current":
 		tc.Status = tc.ArchiveStatus
 		tc.NextStep = archiveNextStep(st, tc.CloseoutVerification, tc.AuditVerification, tc.ReviewVerification)

@@ -55,6 +55,7 @@ func opTrustChain(ctx *Context, args []string) error {
 	kv(ctx, "Closeout", tc.CloseoutVerification+" manifest="+tc.CloseoutPath+" problems="+itoa(tc.CloseoutProblems))
 	kv(ctx, "Audit Packet", tc.AuditVerification+" packet="+tc.AuditPath)
 	kv(ctx, "Archive Packet", tc.ArchiveVerification+" packet="+dash(tc.ArchivePath))
+	kv(ctx, "Evidence Artifacts", tc.EvidenceVerification+" checked="+itoa(tc.EvidenceChecked)+" problems="+itoa(tc.EvidenceProblems))
 	rule(ctx)
 	heading(ctx, "Ledger")
 	ledgerSHA, _ := state.SHA256File(op.LedgerFile())

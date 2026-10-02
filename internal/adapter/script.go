@@ -47,17 +47,22 @@ func (scriptAdapter) Command(t Target, args []string) ([]string, error) {
 func (scriptAdapter) Parse(out []byte) []ProposedFinding { return nil }
 
 // splitTier reads a leading "--tier N" from args and returns the tier (0
-// when absent) and the remaining argv.
+// when absent) and the remaining argv, dropping one "--" separator.
 func splitTier(args []string) (int, []string, error) {
+	tier, rest := 0, args
 	if len(args) >= 2 && args[0] == "--tier" {
 		switch args[1] {
 		case "1":
-			return 1, args[2:], nil
+			tier = 1
 		case "2":
-			return 2, args[2:], nil
+			tier = 2
 		default:
 			return 0, nil, state.Failf("script adapter --tier must be 1 or 2, got: %s", args[1])
 		}
+		rest = args[2:]
 	}
-	return 0, args, nil
+	if len(rest) > 0 && rest[0] == "--" {
+		rest = rest[1:]
+	}
+	return tier, rest, nil
 }

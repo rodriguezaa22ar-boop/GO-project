@@ -14,7 +14,7 @@ Fedora 44 is almost certainly x86_64. Check with `uname -m`
 # verify the download first
 sha256sum -c SHA256SUMS --ignore-missing
 install -m 0755 lcoat-linux-amd64 ~/.local/bin/lcoat   # or arm64
-lcoat version          # -> lcoat 0.1.1
+lcoat version          # -> lcoat 0.1.2
 ```
 
 Pick a lab root (all state lives here; nothing is written elsewhere):
@@ -85,29 +85,42 @@ lcoat op brief
 ## Close out with a verifiable trust chain
 
 ```sh
+OP=astra-recon                    # your operation name
 lcoat op report
 lcoat op handoff
 lcoat op close --force            # --force only while findings are still open
-lcoat op closeout
-lcoat op audit-packet
-lcoat op archive-packet
 
-# Independently re-hash the chain. All three should say "verified".
-lcoat op verify
-lcoat op audit-verify
-lcoat op archive-verify
-lcoat op trust-chain
+# After close there is no active operation, so name it from here on.
+lcoat op closeout       $OP
+lcoat op audit-packet   $OP
+lcoat op archive-packet $OP
+
+# Independently re-hash the chain.
+lcoat op verify         $OP
+lcoat op audit-verify   $OP
+lcoat op archive-verify $OP
+lcoat evidence verify   $OP       # re-hashes every captured evidence file
+lcoat op trust-chain    $OP
 ```
+
+Expect `Trust Chain Status: attention-required` while findings are open.
+Lite can record findings but cannot yet resolve or accept them (that lands
+in the Rust build), so with any findings the packets verify but the chain
+stays attention-required. Check the Verification section: Closeout, Audit
+Packet, Archive Packet and Evidence Artifacts should all say `verified`.
+
+`op brief` may suggest "Create a validation plan"; validation planning is
+not in Lite, so skip that step.
 
 ## Mint a portable proof (optional)
 
 ```sh
-A="$LCOAT_ROOT/sessions/astra-recon/archive/astra-recon-archive.md"
+A="$LCOAT_ROOT/sessions/$OP/archive/$OP-archive.md"
 lcoat receipt create --action astra.recon.archived --actor "$USER" \
-  --subject-type atlas-operation --subject operation://astra-recon \
+  --subject-type atlas-operation --subject operation://$OP \
   --artifact-ref "$A=$(sha256sum "$A" | awk '{print $1}')" \
-  --out astra-recon.receipt.json
-lcoat receipt verify astra-recon.receipt.json
+  --out $OP.receipt.json
+lcoat receipt verify $OP.receipt.json
 ```
 
 ## Notes
@@ -117,7 +130,14 @@ lcoat receipt verify astra-recon.receipt.json
   lives only in the evidence files under your lab root.
 - The ledger (`sessions/<op>/ledger.ndjson`) is append-only; the packet
   verifiers anchor its whole-file hash, so an edited ledger line is caught by
-  `op audit-verify`.
+  `op audit-verify`. Edited or deleted evidence files are caught by
+  `evidence verify` and `op trust-chain`.
+- `receipt verify` checks the receipt itself, not the files it references.
+  To confirm the archive is unchanged, re-run `sha256sum` on it and compare
+  with the receipt's artifact ref.
+- If a tool is not installed, `adapter run` refuses before anything is
+  logged. If the tool runs but exits non-zero, its output is still captured
+  as evidence, the run is logged as an error, and `lcoat` exits 1.
 - Keep real findings and any client/engagement data out of public repos.
   This lab root is yours; it is not published anywhere.
 - `lcoat help` lists every command.

@@ -212,3 +212,48 @@ func Rows(opDir, target string, limit int) ([]Record, error) {
 	}
 	return recs, nil
 }
+
+// ArtifactCheck is the result of re-hashing one stored evidence artifact.
+type ArtifactCheck struct {
+	ID       string
+	Path     string // relative to the operation directory
+	Status   string // verified | changed | missing
+	Expected string
+	Actual   string
+}
+
+// VerifyArtifacts re-hashes every stored evidence artifact for the
+// operation and compares it with the sha256 recorded at capture time. The
+// packet verifiers anchor the evidence index file; this anchors the
+// artifact bytes the index points at, so an edited capture is caught.
+func VerifyArtifacts(opDir string) ([]ArtifactCheck, int, error) {
+	recs, err := Latest(opDir, "")
+	if err != nil {
+		return nil, 0, err
+	}
+	var out []ArtifactCheck
+	problems := 0
+	for _, r := range recs {
+		c := ArtifactCheck{ID: r.ID, Path: r.Path, Expected: r.SHA256}
+		full := filepath.Join(opDir, r.Path)
+		if filepath.IsAbs(r.Path) || !state.FileExists(full) {
+			c.Status = "missing"
+			problems++
+			out = append(out, c)
+			continue
+		}
+		sum, err := state.SHA256File(full)
+		if err != nil {
+			return nil, 0, err
+		}
+		c.Actual = sum
+		if sum == r.SHA256 {
+			c.Status = "verified"
+		} else {
+			c.Status = "changed"
+			problems++
+		}
+		out = append(out, c)
+	}
+	return out, problems, nil
+}

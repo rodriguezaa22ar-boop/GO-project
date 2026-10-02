@@ -50,6 +50,9 @@ func TestAdapterRunCapturesEvidenceAndEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if res.ExitCode != 0 {
+		t.Fatalf("tool did not run: exit=%d argv=%q", res.ExitCode, res.Argv)
+	}
 	if res.Tier != 2 || res.Capability != "active-recon" {
 		t.Errorf("tier=%d cap=%s", res.Tier, res.Capability)
 	}

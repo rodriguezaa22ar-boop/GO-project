@@ -78,3 +78,24 @@ compiles; only a test catches it. This is the main thing the Rust build
 buys: a `MetadataOnly` wrapper type that only the scanner can construct
 makes that path a compile error. Every packet writer in Lite is a place
 where that gap was felt.
+
+## Field test (0.1.1 → 0.1.2)
+
+A full operation run against a live container (local recon via the script
+adapter, guardrail probes, closeout chain, receipt, tamper tests) found:
+
+- **Edited evidence went undetected.** The packets anchor the evidence
+  index, not the artifact bytes. Fixed: `evidence verify` re-hashes every
+  stored artifact, and `op trust-chain` fails on any change. The Rust build
+  should anchor artifact hashes inside the packets themselves.
+- **A missing tool reported success.** `adapter run` printed "ok" and stored
+  an empty capture. Fixed: tools resolve through the scrubbed PATH before
+  `adapter.started`; a non-zero exit warns and exits 1.
+- **Two adapter tests passed for the wrong reason** (the script adapter
+  executed `--` as the tool). Fixed, and tests now require exit 0.
+- **Runbook error:** packet commands after `op close` need the operation
+  name. Fixed.
+- Still open: `receipt verify` does not re-hash referenced artifacts (by
+  design, matches the shell build); with any finding the chain stays
+  attention-required because Lite has no finding resolution; `op brief`
+  suggests validation planning, which Lite lacks.

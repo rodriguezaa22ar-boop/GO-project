@@ -140,3 +140,44 @@ func TestReportListsAdapterEvidence(t *testing.T) {
 		t.Error("report leaked raw tool output; it must stay metadata-only")
 	}
 }
+
+// A tool that is not installed must fail before adapter.started, not be
+// recorded as an empty capture.
+func TestAdapterMissingToolFailsBeforeStart(t *testing.T) {
+	freeze(t, "2026-10-02T07:40:00Z")
+	l := setupLab(t)
+	operation.Start(l, operation.StartParams{Name: "m-op", Target: "node", Profile: "htb-starting-point"})
+	op := reload(t, l)
+	_, err := adapter.Run(op, adapter.RunParams{AdapterName: "script", Target: "node",
+		Args: []string{"--tier", "1", "--", "lcoat-no-such-tool-xyz"}})
+	if err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("want not-found error, got %v", err)
+	}
+	events, _ := ledger.Read(op.Dir)
+	for _, e := range events {
+		if e.Event == "adapter.started" || e.Event == "artifact.created" {
+			t.Errorf("unexpected %s for a missing tool", e.Event)
+		}
+	}
+}
+
+// A non-zero exit is still captured, but recorded as an error.
+func TestAdapterNonZeroExitRecordedAsError(t *testing.T) {
+	freeze(t, "2026-10-02T07:40:00Z")
+	l := setupLab(t)
+	operation.Start(l, operation.StartParams{Name: "z-op", Target: "node", Profile: "htb-starting-point"})
+	op := reload(t, l)
+	res, err := adapter.Run(op, adapter.RunParams{AdapterName: "script", Target: "node",
+		Args: []string{"--tier", "1", "--", "/bin/false"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ExitCode == 0 || res.EvidenceID == "" {
+		t.Fatalf("exit=%d evidence=%q", res.ExitCode, res.EvidenceID)
+	}
+	events, _ := ledger.Read(op.Dir)
+	last := events[len(events)-1]
+	if last.Event != "adapter.finished" || last.Status != "error" {
+		t.Errorf("last event = %s/%s, want adapter.finished/error", last.Event, last.Status)
+	}
+}
