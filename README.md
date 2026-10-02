@@ -20,7 +20,22 @@ An operator starts an operation against an in-scope target and runs tools throug
 
 ## Status
 
-Planning. The blueprint is in [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md). No code has been written yet.
+Prototype, ready-to-refine. The two-week MVP in [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) is built and passes conformance against the Atlas shell build.
+
+Implemented: `target`, `op start/resume/list/status/show/readiness/close/report/handoff/closeout/audit-packet/archive-packet/verify/audit-verify/archive-verify/trust-chain`, `scope status/check`, `evidence add/list`, `finding add/list`, `ledger verify/checkpoint`, `receipt verify/replay/create`, and `adapter run` with the `nmap` and `script` adapters.
+
+Deferred to the Rust build (see the blueprint): `v1 status`/`production status` (the pillars check for a toolchain Lite does not ship, so `op trust-chain` certifies only the metadata chain), validation planning, evidence bundles and redaction, finding lifecycle beyond `add`, release packets, and the `web`/`flow`/`advisor` extensions.
+
+### Build and test
+
+```sh
+go build ./cmd/lcoat
+go test ./...
+# Cross-check against an Atlas shell-build checkout:
+ATLAS_REPO=/path/to/atlas-trust-infrastructure conformance/cross_check.sh
+```
+
+Conformance: a full lifecycle driven through both builds produces byte-identical state once the absolute lab-root path and sha hex are normalized, and each build's verifiers accept the other's packets. See [`docs/DECISION.md`](docs/DECISION.md) for the go/no-go memo.
 
 ## License
 

@@ -187,19 +187,21 @@ The Bats suite in the shell build's `tests/atlas.bats` is the second source of t
 
 ## Two-week plan
 
-Each block ends with a check that can fail, so progress is measured by oracle agreement, not by lines written.
+Each block ended with a check that can fail, so progress was measured by oracle agreement, not by lines written. All blocks are complete; the status column records how each exit check was met.
 
-| Days | Deliverable | Exit check |
-| --- | --- | --- |
-| 1-2 | `envfile`, `state`, `ledger` | Go reads the `learning-op-001` session and computes a ledger SHA256 of `ba36a564...758f0c6f` over 18 events, matching the archive packet |
-| 3-4 | Targets, operations, scope profiles and preflight | `scope check` agrees with the shell build for every tier on `htb-starting-point`; `op start` output diffs clean |
-| 5-6 | `evidence add`, `finding add` | Evidence hash for the sample file is `fa0def3c...c1267ad`; the same-second ID collision test passes |
-| 7-8 | Report, handoff, closeout, audit and archive packets | The shell's `closeout`, `audit-verify` and `archive-verify` accept the Go-written packets |
-| 9-10 | `op verify`, `op trust-chain`, `receipt verify` and `replay` | Every tamper fixture fails the same way as in the shell; the three-receipt demo-site chain replays |
-| 11-12 | `adapter run` with `nmap` and `script` | A scan of a local lab target is hashed into evidence with `adapter.started` and `adapter.finished` in the ledger; a Tier 3 request is refused |
-| 13-14 | Full conformance run and the decision gate | Scenario diff is clean in both directions; a one-page go or no-go memo for the Rust build |
+| Days | Deliverable | Exit check | Status |
+| --- | --- | --- | --- |
+| 1-2 | `envfile`, `state`, `ledger` | Go reads the `learning-op-001` session and computes a ledger SHA256 of `ba36a564...758f0c6f` over 18 events, matching the archive packet | Done; also matches the head event hash and closeout prefix hash |
+| 3-4 | Targets, operations, scope profiles and preflight | `scope check` agrees with the shell build for every tier on `htb-starting-point`; `op start` output diffs clean | Done; `session.env`, scope snapshot and target record are byte-identical |
+| 5-6 | `evidence add`, `finding add` | Evidence hash for the sample file is `fa0def3c...c1267ad`; the same-second ID collision test passes | Done |
+| 7-8 | Report, handoff, closeout, audit and archive packets | The shell's `closeout`, `audit-verify` and `archive-verify` accept the Go-written packets | Done; all four packets are structurally byte-identical and verify both directions |
+| 9-10 | `op verify`, `op trust-chain`, `receipt verify` and `replay` | Every tamper fixture fails the same way as in the shell; the three-receipt demo-site chain replays | Done; `receipt verify --json` is byte-identical. `op trust-chain` certifies the metadata chain only (v1 deferred, below) |
+| 11-12 | `adapter run` with `nmap` and `script` | A scan of a local lab target is hashed into evidence with `adapter.started` and `adapter.finished` in the ledger; a Tier 3 request is refused | Done; nmap parses XML into proposed findings, metasploit refused |
+| 13-14 | Full conformance run and the decision gate | Scenario diff is clean in both directions; a one-page go or no-go memo for the Rust build | Done; `conformance/cross_check.sh` passes, memo in `docs/DECISION.md` (verdict: go) |
 
-Days 7-8 carry the schedule risk, because the packets embed each other's hashes and must match the shell's format exactly. If the plan slips, cut `receipt create` and the `script` adapter first. Never cut a verifier.
+Days 7-8 were the schedule risk, because the packets embed each other's hashes and must match the shell's format exactly; they landed without cutting scope.
+
+One deviation from the plan: `op trust-chain` does not evaluate v1 readiness. The shell build's v1 pillars check for the `atlas`/`wiremap`/`vector`/`intelctl` toolchain that Lite does not ship, so Lite certifies only the metadata chain (archive status plus the closeout, audit and archive verifications). `v1 status` stays deferred to the Rust build.
 
 ## Open decisions
 
@@ -208,7 +210,8 @@ Settle these before day 1. Each has a default so the build is not blocked if you
 - [ ] **Repo location.** The Atlas public repo's `AGENTS.md` says Atlas is shell-native and tells contributors not to restructure it. Default: a separate repo (this one), so those rules stay true and Lite can state its own.
 - [ ] **Public or private.** The existing split puts trust and verification in the public repo and operator runtime in the private toolkit. Default: verifiers, packets and receipts public; the `adapter` package private.
 - [ ] **Byte-compatibility.** Default: Lite matches the shell build's formats exactly. A clean break would be faster to write but loses the oracle.
-- [ ] **Ledger hash chain.** Today only receipts carry `prev_hash`; ledger events do not. Default: Lite does not add one. Record it as a Rust-build candidate, since a chained ledger would let a verifier detect a rewritten middle event, not just a changed file.
-- [ ] **Dev environment.** Default: add Go to the existing `shell.nix` so the toolchain stays reproducible the same way.
+- [x] **Byte-compatibility (resolved in build).** Lite matches the shell build's formats exactly; the conformance cross-check holds the oracle.
+- [x] **Ledger hash chain.** Lite does not add one; it stays byte-compatible. Recorded as the strongest single Rust-build candidate (see `docs/DECISION.md`).
+- [ ] **Dev environment.** Default: add Go to the existing `shell.nix` so the toolchain stays reproducible the same way. (Lite currently builds with a stock Go toolchain and the standard library only.)
 - [x] **Name.** Lab Coat, with the binary and crate name `lcoat`. The `atlas.*` schema IDs stay unchanged through Lite so the shell build remains a usable oracle; renaming them is a deliberate break for the Rust build.
-- [ ] **License.** The owner's call; set it before the first public commit.
+- [ ] **License.** The owner's call; set it before the first public commit. Still open.
