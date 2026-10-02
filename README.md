@@ -1,6 +1,6 @@
-# Atlas Lite (Go)
+# Lab Coat Lite (Go)
 
-Atlas Lite is a small, single-binary Go implementation of the Atlas control plane. It keeps the same on-disk format as the Atlas shell build and wraps tools you already use, such as nmap, in scope checks and hashed evidence.
+Lab Coat Lite (binary: `lcoat`) is a small, single-binary Go implementation of the control plane first prototyped as Atlas. It keeps the same on-disk format as the Atlas shell build and wraps tools you already use, such as nmap, in scope checks and hashed evidence.
 
 An operator starts an operation against an in-scope target and runs tools through it. Each run is checked against a scope profile and recorded in an append-only ledger. Its output is saved as hashed evidence, and findings link back to that evidence. At the end, Lite produces metadata-only packets (report, handoff, closeout, audit, archive) and verifiers that replay the chain. Packets hold hashes, paths, counts and IDs, never raw artifacts or secrets.
 

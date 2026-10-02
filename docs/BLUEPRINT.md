@@ -1,6 +1,6 @@
-# Atlas Lite (Go) Blueprint
+# Lab Coat Lite (Go) Blueprint
 
-Atlas Lite is a two-week Go build of the Atlas control-plane core, tested against the existing shell implementation as an oracle, then released as Lite while the Rust build takes over.
+Lab Coat Lite (binary: `lcoat`) is a two-week Go build of the control-plane core first prototyped as Atlas, tested against the existing shell implementation as an oracle, then released as Lite while the Rust build takes over.
 
 ## Goals and non-goals
 
@@ -25,7 +25,7 @@ Per the project's own language rules, Lite is described as ready-to-refine and m
 ## Architecture
 
 ```text
-Operator (atlas CLI) --> Atlas Lite core (Go) ------------> Your existing tools
+Operator (lcoat CLI) --> Lab Coat Lite core (Go) ------------> Your existing tools
                          - Scope check (tier + profile)      - nmap
                          - Adapter runner                    - any CLI script
                          - Evidence and findings             - Burp, ZAP: later
@@ -64,7 +64,7 @@ Three quirks the Go build has to respect:
 
 ## Command surface
 
-Lite keeps the shell build's grammar (`atlas <domain> <verb>`) so the same walkthroughs work on both. The MVP covers the lifecycle; everything else stays shell-side for now.
+Lite keeps the shell build's grammar (`lcoat <domain> <verb>`, formerly `atlas <domain> <verb>`) so the same walkthroughs work on both. The MVP covers the lifecycle; everything else stays shell-side for now.
 
 | Command | Stage | Mutates state | Lite |
 | --- | --- | --- | --- |
@@ -95,9 +95,9 @@ Read-only commands must stay read-only in Go too. Each gets a test that snapshot
 One module, one binary, standard library only. `encoding/json`, `crypto/sha256`, `os/exec` and `flag` cover everything Lite needs, which keeps the supply chain as small as the shell build's.
 
 ```text
-atlas-lite/
+lcoat/
   go.mod
-  cmd/atlas/main.go        CLI entry and subcommand dispatch
+  cmd/lcoat/main.go        CLI entry and subcommand dispatch
   internal/
     envfile/               parse and write shell-quoted env records
     state/                 session layout, ID generation, file locking
@@ -123,7 +123,7 @@ Two rules keep the packages honest. `ledger` is the only package that opens `led
 
 An adapter wraps an external tool as a subprocess. The tool never needs to know about Atlas; Lite supplies the scope check, the ledger entries and the evidence hashing around it.
 
-`atlas adapter run <adapter> <target> [args]` does this, in order:
+`lcoat adapter run <adapter> <target> [args]` does this, in order:
 
 1. **Classify.** The adapter maps its arguments to a capability tier. Unknown arguments classify higher, per the project rule "when unsure, classify higher, not lower".
 2. **Preflight.** `scope` checks the tier against the operation's `ALLOWED_CAPABILITIES` and `BLOCKED_CAPABILITIES`. A blocked or out-of-scope target stops here, with a ledger event.
@@ -210,4 +210,5 @@ Settle these before day 1. Each has a default so the build is not blocked if you
 - [ ] **Byte-compatibility.** Default: Lite matches the shell build's formats exactly. A clean break would be faster to write but loses the oracle.
 - [ ] **Ledger hash chain.** Today only receipts carry `prev_hash`; ledger events do not. Default: Lite does not add one. Record it as a Rust-build candidate, since a chained ledger would let a verifier detect a rewritten middle event, not just a changed file.
 - [ ] **Dev environment.** Default: add Go to the existing `shell.nix` so the toolchain stays reproducible the same way.
-- [ ] **Name and license.** "Atlas Lite" is a working title; the license is the owner's call and should be set before the first public commit.
+- [x] **Name.** Lab Coat, with the binary and crate name `lcoat`. The `atlas.*` schema IDs stay unchanged through Lite so the shell build remains a usable oracle; renaming them is a deliberate break for the Rust build.
+- [ ] **License.** The owner's call; set it before the first public commit.
