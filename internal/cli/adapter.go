@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"time"
 
 	"github.com/rodriguezaa22ar-boop/go-project/internal/adapter"
@@ -33,6 +34,11 @@ func adapterRun(ctx *Context, args []string) error {
 	const usage = "adapter run <adapter> <target> [--tier 1|2] [--timeout seconds] [--] [tool args...]"
 	if err := needArgs(2, args, usage); err != nil {
 		return err
+	}
+	if strings.HasPrefix(args[1], "-") {
+		// Usually an empty shell variable: `adapter run nmap $TARGET --timeout 600`
+		// with TARGET unset shifts every argument left by one.
+		return state.Failf("adapter run: missing <target> before %q (is $TARGET set?)\nusage: %s", args[1], usage)
 	}
 	p := adapter.RunParams{AdapterName: args[0], Target: args[1]}
 	rest := args[2:]

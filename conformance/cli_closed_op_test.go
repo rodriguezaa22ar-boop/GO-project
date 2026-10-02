@@ -77,3 +77,15 @@ func TestListCommandsWorkOnClosedOperationByName(t *testing.T) {
 		t.Error("scope status --bogus succeeded")
 	}
 }
+
+// An empty $TARGET shifts the arguments left; the CLI must name the real
+// problem instead of passing the shifted values to the adapter.
+func TestAdapterRunMissingTargetIsReported(t *testing.T) {
+	t.Setenv("LCOAT_ROOT", t.TempDir())
+	mustRun(t, "target", "add", "box", "127.0.0.1", "--scope-status", "in-scope")
+	mustRun(t, "op", "start", "op1", "box", "test")
+	_, errOut, code := run(t, "adapter", "run", "nmap", "--timeout", "600", "--", "-sT")
+	if code == 0 || !strings.Contains(errOut, "missing <target>") {
+		t.Errorf("want missing-target error, got exit %d: %s", code, errOut)
+	}
+}
