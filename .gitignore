@@ -1,0 +1,11 @@
+# Build output
+/lcoat
+/dist/
+*-linux-amd64
+*-linux-arm64
+
+# Local lab roots and session state (never commit real operation data)
+/sessions/
+/reports/
+/state/
+*.receipt.json
