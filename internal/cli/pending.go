@@ -12,5 +12,4 @@ func opAudit(ctx *Context, args []string) error      { return notYet("op audit")
 func opArchive(ctx *Context, args []string) error    { return notYet("op archive") }
 func opTrustChain(ctx *Context, args []string) error { return notYet("op trust-chain") }
 
-func runReceipt(ctx *Context, args []string) error { return notYet("receipt") }
 func runAdapter(ctx *Context, args []string) error { return notYet("adapter") }
