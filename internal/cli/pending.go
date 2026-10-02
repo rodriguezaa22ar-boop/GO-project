@@ -10,5 +10,3 @@ func notYet(verb string) error {
 
 func opAudit(ctx *Context, args []string) error   { return notYet("op audit") }
 func opArchive(ctx *Context, args []string) error { return notYet("op archive") }
-
-func runAdapter(ctx *Context, args []string) error { return notYet("adapter") }
