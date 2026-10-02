@@ -39,4 +39,4 @@ Conformance: a full lifecycle driven through both builds produces byte-identical
 
 ## License
 
-Not yet chosen. Set a license before accepting contributions.
+Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) for attribution.
