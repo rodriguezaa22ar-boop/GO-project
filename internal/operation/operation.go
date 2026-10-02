@@ -258,7 +258,7 @@ func ActiveSlug(l *state.Layout) string {
 func LoadActive(l *state.Layout) (*Operation, error) {
 	slug := ActiveSlug(l)
 	if slug == "" {
-		return nil, state.Failf("no active operation; use 'atlas op start' or 'atlas op resume'")
+		return nil, state.Failf("no active operation; use 'lcoat op start' or 'lcoat op resume', or name a closed operation where the command accepts one")
 	}
 	return Load(l, slug)
 }

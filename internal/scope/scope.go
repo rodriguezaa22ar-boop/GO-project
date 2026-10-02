@@ -331,7 +331,7 @@ func (s *Snapshot) Preflight(capability, target, reason string, hasApproval func
 	}
 	if RequiresApproval(capability) && (hasApproval == nil || !hasApproval(capability)) {
 		return Decision{Detail: detail + " approval-required=" + capability,
-			Err: state.Failf("approval required: capability '%s' needs 'atlas approval grant %s <reason...>'", capability, capability)}
+			Err: state.Failf("approval required: capability '%s' needs an approval grant, which Lite does not support (Lite runs tier 2 and below)", capability)}
 	}
 	return Decision{Allowed: true, Detail: detail + " target=" + target}
 }
