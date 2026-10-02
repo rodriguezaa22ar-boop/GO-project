@@ -74,7 +74,12 @@ func Append(opDir string, e Event) error {
 // Read returns every event with its line number. A missing or empty ledger
 // returns nil.
 func Read(opDir string) ([]Event, error) {
-	recs, err := ndjson.ReadFile(File(opDir))
+	return ReadPath(File(opDir))
+}
+
+// ReadPath reads events directly from a ledger file path.
+func ReadPath(path string) ([]Event, error) {
+	recs, err := ndjson.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

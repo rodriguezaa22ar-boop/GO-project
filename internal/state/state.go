@@ -216,3 +216,11 @@ func (e *UserError) Error() string { return e.Msg }
 func Failf(format string, args ...any) error {
 	return &UserError{Msg: fmt.Sprintf(format, args...)}
 }
+
+// WriteFileMode writes data with the given mode, creating or truncating.
+func WriteFileMode(path string, data []byte, mode os.FileMode) error {
+	return os.WriteFile(path, data, mode)
+}
+
+// MkdirAll creates a directory tree with mode 0700.
+func MkdirAll(path string) error { return os.MkdirAll(path, 0o700) }
