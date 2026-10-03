@@ -20,6 +20,8 @@ An operator starts an operation against an in-scope target and runs tools throug
 
 ## Status
 
+**Pinned as the oracle for the Rust build.** Lab Coat Lite is complete at v0.1.4 and field-validated; development has moved to [Lab Coat (Rust)](https://github.com/rodriguezaa22ar-boop/Labcoat-), which stays byte-compatible with this build and uses it, together with the shell build, as a conformance oracle. Lite receives security fixes only and is retired when Lab Coat 0.2.0 ships.
+
 Prototype, ready-to-refine. The two-week MVP in [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) is built and passes conformance against the Atlas shell build.
 
 Implemented: `target`, `op start/resume/list/status/show/readiness/close/report/handoff/closeout/audit-packet/archive-packet/verify/audit-verify/archive-verify/trust-chain`, `scope status/check`, `evidence add/list/verify`, `finding add/list`, `ledger verify/checkpoint`, `receipt verify/replay/create`, and `adapter run` with the `nmap` adapter (flag allowlist; the target always comes from scope) and the `script` adapter (operator-declared tier, recorded rather than enforced).
