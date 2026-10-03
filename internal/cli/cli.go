@@ -32,6 +32,11 @@ func Run(args []string, out, errOut io.Writer) int {
 	}
 	ctx := &Context{Layout: layout, Out: out, Err: errOut}
 	if !skipsLayout(args) {
+		if layout.RootFromCwd {
+			// Field test: an unset LCOAT_ROOT silently scattered lab data
+			// across the operator's home directory.
+			fmt.Fprintf(errOut, "warning: LCOAT_ROOT is not set; using the current directory as the lab root (%s)\n  set it once: echo 'export LCOAT_ROOT=\"$HOME/lcoat-lab\"' >> ~/.bashrc\n", layout.Root)
+		}
 		if err := layout.EnsureLayout(); err != nil {
 			fmt.Fprintf(errOut, "error: %v\n", err)
 			return 1
@@ -109,7 +114,7 @@ func dispatch(ctx *Context, args []string) error {
 }
 
 // Version is set at build time; the default marks a source build.
-var Version = "0.1.0-dev"
+var Version = "0.1.4-dev"
 
 const usage = `usage:
   lcoat help

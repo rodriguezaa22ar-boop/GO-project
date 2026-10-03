@@ -107,3 +107,47 @@ adapter, guardrail probes, closeout chain, receipt, tamper tests) found:
 - Still open: `receipt verify` does not re-hash referenced artifacts (by
   design, matches the shell build); `op brief` suggests validation
   planning, which Lite lacks.
+
+## Field validation on a real server (0.1.3 → 0.1.4)
+
+Two operations were run against the author's own Fedora 44 lab server,
+end to end, by the operator rather than by a test harness.
+
+| | Assessment (`astra-review`) | Remediation (`astra-review-2`) |
+| --- | --- | --- |
+| Target | tailnet address | LAN address |
+| Evidence files | 12 | 6 |
+| Ledger events | 73 | 36 |
+| Findings | 7: 3 medium, 3 low, 1 info (5 open, 2 resolved in-run) | 5, all resolved |
+| Close | forced, `attention-required` | `ready` |
+| Packets and evidence | all verified, 0 problems | all verified, 0 problems |
+| Trust chain | `attention-required` | `current` |
+
+Two chained receipts pin both archives; replay accepts them only in order,
+and each archive re-hashes to its pinned value.
+
+What held under real use:
+
+- Every scope refusal (blocked capability, out-of-scope address, extra nmap
+  target) fired before anything ran.
+- A scan that hit its timeout still produced evidence and an error entry.
+- Operator-captured privileged output (`sudo ss`, firewall config) entered
+  the record through `evidence add` and was re-verified like adapter output.
+- `resolved` findings carried before-and-after evidence, which the operator
+  confirmed by reading the captured files directly.
+
+What it found in lcoat, all fixed with regression tests:
+
+- **Empty `$TARGET`** shifted arguments, so nmap refused the timeout value
+  with a misleading error. Now reported as a missing target.
+- **120 s default timeout** cut off `-sV` on 1,000 ports (took ~3 minutes).
+  nmap now defaults to 10 minutes.
+- **Unset `LCOAT_ROOT`** silently put lab data in the operator's home
+  directory. lcoat now warns on every command until it is set.
+- The runbook assumed a Linux workstation for remote scans, and its shell
+  comments broke under zsh; the field manual now runs everything on the
+  target host.
+
+Carry into Rust: a self-scan cannot evidence firewall behaviour, so the
+Rust build should support a second vantage point (an agent on another
+host) and record which vantage each scan came from.

@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rodriguezaa22ar-boop/go-project/internal/scope"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/state"
@@ -14,6 +15,10 @@ func init() { register(nmapAdapter{}) }
 type nmapAdapter struct{}
 
 func (nmapAdapter) Name() string { return "nmap" }
+
+// DefaultTimeout is longer than the runner's 120 s default: in the field
+// test, -sV across 1,000 ports took over 3 minutes and was cut off.
+func (nmapAdapter) DefaultTimeout() time.Duration { return 10 * time.Minute }
 
 // The nmap adapter accepts an allowlist of flags only. Anything else is
 // refused, including every positional argument: the target address is

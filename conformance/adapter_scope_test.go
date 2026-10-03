@@ -3,6 +3,7 @@ package conformance
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rodriguezaa22ar-boop/go-project/internal/adapter"
 	"github.com/rodriguezaa22ar-boop/go-project/internal/ledger"
@@ -179,5 +180,20 @@ func TestAdapterNonZeroExitRecordedAsError(t *testing.T) {
 	last := events[len(events)-1]
 	if last.Event != "adapter.finished" || last.Status != "error" {
 		t.Errorf("last event = %s/%s, want adapter.finished/error", last.Event, last.Status)
+	}
+}
+
+// Field test: -sV over 1,000 ports took ~3 minutes and hit the old 120 s
+// default. nmap must default to a longer timeout than generic scripts.
+func TestNmapHasLongerDefaultTimeout(t *testing.T) {
+	a, _ := adapter.Lookup("nmap")
+	d, ok := a.(interface{ DefaultTimeout() time.Duration })
+	if !ok || d.DefaultTimeout() < 5*time.Minute {
+		t.Fatalf("nmap default timeout too short or missing")
+	}
+	if s, _ := adapter.Lookup("script"); s != nil {
+		if _, ok := s.(interface{ DefaultTimeout() time.Duration }); ok {
+			t.Error("script adapter should keep the runner default")
+		}
 	}
 }

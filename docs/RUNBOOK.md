@@ -14,13 +14,13 @@ Fedora 44 is almost certainly x86_64. Check with `uname -m`
 # verify the download first
 sha256sum -c SHA256SUMS --ignore-missing
 install -m 0755 lcoat-linux-amd64 ~/.local/bin/lcoat   # or arm64
-lcoat version          # -> lcoat 0.1.3
+lcoat version          # -> lcoat 0.1.4
 ```
 
 Pick a lab root (all state lives here; nothing is written elsewhere):
 
 ```sh
-export LCOAT_ROOT="$HOME/lcoat-lab"
+echo 'export LCOAT_ROOT="$HOME/lcoat-lab"' >> ~/.bashrc && source ~/.bashrc
 mkdir -p "$LCOAT_ROOT"
 ```
 
@@ -66,6 +66,11 @@ the adapter manages output), NSE scripts other than `--script default|safe`,
 --reason --traceroute --version-light --version-all`, plus `-p`, `--top-ports`,
 `--exclude-ports`, `--version-intensity`, `--max-retries`, `--max-rate`,
 `--host-timeout`.
+
+nmap runs default to a 10-minute timeout (other adapters: 2 minutes). Pass
+`--timeout <seconds>` before the `--` to change it. If a run hits the limit,
+its partial output is still kept as evidence and the run is logged as an
+error.
 
 ```sh
 lcoat adapter run nmap astra -- -sV 10.0.0.0/8   # refused: extra target

@@ -89,3 +89,25 @@ func TestAdapterRunMissingTargetIsReported(t *testing.T) {
 		t.Errorf("want missing-target error, got exit %d: %s", code, errOut)
 	}
 }
+
+// Field test: with LCOAT_ROOT unset, lab data landed in the operator's home
+// directory without a word. lcoat must say so.
+func TestUnsetRootWarns(t *testing.T) {
+	t.Setenv("LCOAT_ROOT", "")
+	t.Setenv("LAB_ROOT", "")
+	dir := t.TempDir()
+	prev, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chdir(prev) })
+
+	_, errOut, _ := run(t, "target", "list")
+	if !strings.Contains(errOut, "LCOAT_ROOT is not set") {
+		t.Errorf("no warning with LCOAT_ROOT unset; stderr: %q", errOut)
+	}
+	t.Setenv("LCOAT_ROOT", dir)
+	if _, errOut, _ := run(t, "target", "list"); strings.Contains(errOut, "LCOAT_ROOT is not set") {
+		t.Errorf("warned even though LCOAT_ROOT is set: %q", errOut)
+	}
+}

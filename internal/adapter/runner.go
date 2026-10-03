@@ -97,7 +97,13 @@ func Run(op *operation.Operation, p RunParams) (*Result, error) {
 		return nil, err
 	}
 
-	out, exitCode, dur, runErr := execute(argv, p.Timeout)
+	timeout := p.Timeout
+	if timeout <= 0 {
+		if d, ok := a.(interface{ DefaultTimeout() time.Duration }); ok {
+			timeout = d.DefaultTimeout()
+		}
+	}
+	out, exitCode, dur, runErr := execute(argv, timeout)
 	// Capture output as evidence regardless of exit code, so a failed run is
 	// still auditable.
 	rec, err := captureEvidence(op, a.Name(), target, out)

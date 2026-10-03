@@ -31,6 +31,9 @@ type Layout struct {
 	ProfilesDir string
 	AtlasState  string
 	ActiveFile  string
+	// RootFromCwd is true when neither LAB_ROOT nor LCOAT_ROOT was set and
+	// the current directory became the lab root.
+	RootFromCwd bool
 }
 
 // Resolve builds the layout from the environment, mirroring lib/common.sh:
@@ -41,12 +44,14 @@ func Resolve() (*Layout, error) {
 	if root == "" {
 		root = os.Getenv("LCOAT_ROOT")
 	}
+	fromCwd := false
 	if root == "" {
 		wd, err := os.Getwd()
 		if err != nil {
 			return nil, err
 		}
 		root = wd
+		fromCwd = true
 	}
 	root, err := filepath.Abs(root)
 	if err != nil {
@@ -73,7 +78,7 @@ func Resolve() (*Layout, error) {
 		return fallback
 	}
 
-	l := &Layout{Root: root}
+	l := &Layout{Root: root, RootFromCwd: fromCwd}
 	l.StateDir = get("LAB_STATE_DIR", filepath.Join(root, "state"))
 	l.TargetsDir = get("LAB_TARGETS_DIR", filepath.Join(root, "targets"))
 	l.SessionsDir = get("LAB_SESSIONS_DIR", filepath.Join(root, "sessions"))
