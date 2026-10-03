@@ -20,7 +20,7 @@ An operator starts an operation against an in-scope target and runs tools throug
 
 ## Status
 
-**Pinned as the oracle for the Rust build.** Lab Coat Lite is complete at v0.1.4 and field-validated; development has moved to [Lab Coat (Rust)](https://github.com/rodriguezaa22ar-boop/Labcoat-), which stays byte-compatible with this build and uses it, together with the shell build, as a conformance oracle. Lite receives security fixes only and is retired when Lab Coat 0.2.0 ships.
+**Pinned as the oracle for the Rust build.** Lab Coat Lite is complete at v0.1.4 and field-validated; development has moved to [Lab Coat (Rust)](https://github.com/rodriguezaa22ar-boop/labcoat), which stays byte-compatible with this build and uses it, together with the shell build, as a conformance oracle. Lite receives security fixes only and is retired when Lab Coat 0.2.0 ships.
 
 Prototype, ready-to-refine. The two-week MVP in [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) is built and passes conformance against the Atlas shell build.
 
