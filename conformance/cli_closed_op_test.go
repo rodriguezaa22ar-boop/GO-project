@@ -111,3 +111,23 @@ func TestUnsetRootWarns(t *testing.T) {
 		t.Errorf("warned even though LCOAT_ROOT is set: %q", errOut)
 	}
 }
+
+// `lcoat version` must not create lab directories or warn about the root.
+func TestVersionTouchesNothing(t *testing.T) {
+	t.Setenv("LCOAT_ROOT", "")
+	t.Setenv("LAB_ROOT", "")
+	dir := t.TempDir()
+	prev, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chdir(prev) })
+
+	out, errOut, code := run(t, "version")
+	if code != 0 || !strings.HasPrefix(out, "lcoat ") || errOut != "" {
+		t.Fatalf("version: exit %d out %q err %q", code, out, errOut)
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+		t.Errorf("version created %d entries in the current directory", len(entries))
+	}
+}

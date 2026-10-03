@@ -67,6 +67,9 @@ type ExitError struct {
 func (e *ExitError) Error() string { return e.Msg }
 
 func skipsLayout(args []string) bool {
+	if len(args) > 0 && args[0] == "version" {
+		return true
+	}
 	if len(args) < 2 {
 		return false
 	}
